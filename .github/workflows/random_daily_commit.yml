@@ -1,0 +1,69 @@
+name: Random Daily Commit
+
+on:
+  schedule:
+    # Runs once a day at 00:00 UTC, randomness handled by sleep delay
+    - cron: "0 0 * * *"
+  workflow_dispatch: # allow manual trigger anytime
+
+permissions:
+  contents: write
+
+jobs:
+  random-daily-commit:
+    runs-on: ubuntu-latest
+    env:
+      AUTHOR_NAME: "github-actions[bot]"
+      AUTHOR_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Wait for a random delay (0–23 hours)
+        id: random_delay
+        run: |
+          # Random delay between 0 and 23 hours (in seconds)
+          DELAY=$((RANDOM % 86400))
+          HOURS=$((DELAY / 3600))
+          MINS=$(( (DELAY % 3600) / 60 ))
+          echo "Sleeping for $HOURS hour(s) and $MINS minute(s)..."
+          sleep $DELAY
+          echo "delay_done=true" >> $GITHUB_OUTPUT
+
+      - name: Make the random daily commit
+        if: steps.random_delay.outputs.delay_done == 'true'
+        run: |
+          # Create list of possible files to update (you can edit these)
+          FILES=("daily_commit_log.txt" "notes.md" "progress.txt" "activity_log.json")
+
+          # Pick a random file
+          FILE=${FILES[$RANDOM % ${#FILES[@]}]}
+          echo "Chosen file: $FILE"
+
+          # Ensure file exists
+          touch "$FILE"
+
+          # Add timestamp or simple text update
+          DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "Random daily update at $DATE" >> "$FILE"
+
+          # Random commit messages
+          MESSAGES=(
+            "Daily code heartbeat 💻"
+            "Another day, another commit 🚀"
+            "Small progress, big results 🌱"
+            "Keep pushing forward 🔥"
+            "Routine check-in ✨"
+            "Consistency is key 🧠"
+            "Automated update 🤖"
+          )
+          MSG=${MESSAGES[$RANDOM % ${#MESSAGES[@]}]}
+          echo "Commit message: $MSG"
+
+          # Configure git and push
+          git config user.name "$AUTHOR_NAME"
+          git config user.email "$AUTHOR_EMAIL"
+          git add "$FILE"
+          git commit -m "$MSG — $DATE"
+          git push
