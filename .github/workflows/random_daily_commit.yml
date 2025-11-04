@@ -66,4 +66,4 @@ jobs:
           git config user.email "$AUTHOR_EMAIL"
           git add "$FILE"
           git commit -m "$MSG — $DATE"
-          git push
+          git push origin main
